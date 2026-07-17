@@ -1,0 +1,16 @@
+field,definition,source
+neighbourhood_code,CBS neighbourhood code,CBS
+neighbourhood,Neighbourhood name,CBS
+population,Number of residents,CBS
+housing_units,Number of housing units,CBS
+student_age_share_pct,Residents aged 15–24 divided by population,Derived
+one_person_household_pct,One-person households divided by all households,Derived
+rental_housing_pct,Rental homes as a percentage of housing stock,CBS
+apartment_housing_pct,Multi-family homes as a percentage of housing stock,CBS
+average_woz_eur_thousands,Average WOZ value in thousands of euros,CBS
+distance_large_supermarket_km,Average distance to a large supermarket,CBS
+supermarket_distance_imputed,Whether supermarket distance was median-imputed,Derived
+balanced_score,Weighted balanced-profile score,Derived
+budget_focused_score,Weighted budget-focused score,Derived
+student_hub_score,Weighted student-hub score,Derived
+housing_availability_score,Weighted housing-availability score,Derived

@@ -1,77 +1,70 @@
-# Maastricht Student Neighbourhood Suitability
+# Maastricht neighbourhoods for students
 
-An end-to-end Business Analytics portfolio project comparing Maastricht neighbourhoods from a student-housing perspective.
+I study Business Analytics in Maastricht and wanted to compare neighbourhoods using public data rather than relying only on housing-platform descriptions.
 
-## Decision question
+The question is simple:
 
-**Which Maastricht neighbourhoods combine student-age presence, rental availability, apartment stock, one-person households, a lower housing-value proxy and supermarket access?**
+> Which Maastricht neighbourhoods have characteristics that could make them more suitable for students?
 
-## What this demonstrates
+I used the 2025 CBS neighbourhood dataset and built a scoring model around six factors: the share of residents aged 15–24, rental housing, apartment housing, one-person households, average WOZ value, and distance to a large supermarket.
 
-- Current public-data sourcing and documentation
-- Python data cleaning and feature engineering
-- Transparent KPI and scoring design
-- Preference and sensitivity analysis
-- SQL and SQLite
-- Data-quality validation
-- Interactive HTML dashboard
-- Stakeholder-facing limitations and recommendations
+This is a neighbourhood comparison, not a live room finder. It does not know whether a room is currently available or what the advertised rent is.
 
-## Headline result
+![Top ten neighbourhoods under the balanced profile](assets/top10.svg)
 
-Under the balanced profile, the top five are **Binnenstad, Boschstraatkwartier, Randwyck, Statenkwartier and Sint Maartenspoort**.
+## What I found
 
-Across the 38 ranked residential neighbourhoods, the median rental-housing share is **63.5%** and the median average WOZ proxy is approximately **€291k**.
+Under the balanced profile, the top five neighbourhoods are:
 
-These results do not establish that rooms are currently available.
+| Rank | Neighbourhood | Score |
+|---:|---|---:|
+| 1 | Binnenstad | 93.8 |
+| 2 | Boschstraatkwartier | 93.4 |
+| 3 | Randwyck | 91.9 |
+| 4 | Statenkwartier | 90.7 |
+| 5 | Sint Maartenspoort | 84.0 |
 
-## Dashboard
+The rankings are sensitive to what a student values. For example, Jekerkwartier ranks 7th in the balanced model but 19th in the budget-focused model because its average WOZ value is relatively high.
 
-Open `dashboard/maastricht_student_neighbourhood_dashboard.html`. It supports four preference profiles:
+That sensitivity is the main reason I included four profiles instead of presenting one ranking as objectively correct.
 
-- Balanced
-- Budget focused
-- Student hub
-- Housing availability
+## Repository contents
 
-## Data source
+- `src/download_data.py` downloads the CBS workbook.
+- `src/pipeline.py` cleans the Maastricht data and calculates the scores.
+- `src/scoring.py` contains the score normalisation and profile weights.
+- `src/validate_data.py` checks the main assumptions and output ranges.
+- `data/processed/neighbourhood_scores.csv` contains the current results.
+- `sql/analysis_queries.sql` contains example SQL questions.
+- `dashboard/index.html` reads the processed CSV and shows the four profiles.
 
-CBS, *Kerncijfers wijken en buurten 2025*.
+## How the score works
 
-- Dataset: https://www.cbs.nl/nl-nl/cijfers/detail/86165NED
-- Workbook: https://download.cbs.nl/regionale-kaarten/kwb2025.xlsx
-- Release used: 25 June 2026
+The balanced profile uses these weights:
 
-## Balanced score
-
-| Component | Weight |
+| Factor | Weight |
 |---|---:|
 | Student-age presence | 25% |
-| Rental access | 20% |
-| Apartment fit | 15% |
-| One-person-household fit | 15% |
-| Lower-WOZ proxy | 15% |
-| Grocery access | 10% |
+| Rental housing | 20% |
+| Apartment housing | 15% |
+| One-person households | 15% |
+| Lower WOZ value | 15% |
+| Supermarket access | 10% |
 
-Each input is winsorised at the 5th and 95th percentiles and normalised to 0–100. Neighbourhoods below 250 residents or 100 housing units are excluded.
+I gave the largest weight to student-age presence because I wanted the balanced profile to favour areas with an existing young-adult population. Rental housing received the next-largest weight because owner-occupied housing is generally less relevant to a student looking for a room.
 
-Brusselsepoort has one missing supermarket-distance value. It is retained using the median among eligible Maastricht neighbourhoods and explicitly flagged.
+The other factors are secondary characteristics rather than direct measures of room availability. The weights are subjective, so the dashboard also includes budget-focused, student-hub, and housing-availability profiles.
 
-## Critical limitations
+More detail is in [METHODOLOGY.md](METHODOLOGY.md).
 
-1. WOZ value is not student rent.
-2. The source does not contain live room listings, vacancy, room size or landlord rules.
-3. Residents aged 15–24 are not identical to students.
-4. Neighbourhood averages hide street-level variation.
-5. The current version does not include cycling time to a faculty.
-6. Score weights encode preferences and are not objective truths.
-
-## Reproduce
+## Run the project
 
 ```bash
 python -m venv .venv
+
 # Windows
 .venv\Scripts\activate
+
 # macOS/Linux
 source .venv/bin/activate
 
@@ -79,10 +72,19 @@ pip install -r requirements.txt
 python src/download_data.py
 python src/pipeline.py
 python src/validate_data.py
+python -m http.server 8000
 ```
 
-The large CBS workbook and generated SQLite database are intentionally excluded from Git history. Run the download and pipeline scripts to reproduce them.
+Then open `http://localhost:8000/dashboard/` in a browser. The small local server is needed because the dashboard reads the processed CSV rather than containing copied results.
 
-## Best extension
+## Important limitations
 
-Collect a monthly sample of advertised student rooms and add rent, room size, furnished status, listing duration, neighbourhood and cycling time to SBE. This would replace the WOZ proxy with direct rental-market evidence.
+- Average WOZ value is not student rent. I use it only as a rough neighbourhood-level housing-value proxy.
+- Residents aged 15–24 include non-students and exclude students older than 24.
+- The dataset does not contain live listings, vacancy, room size, landlord rules, or furnished status.
+- Neighbourhood averages hide variation between streets and individual properties.
+- The current model does not include cycling time to a specific university faculty.
+
+## What I would add next
+
+The clearest next step is a time-stamped sample of advertised student rooms, including rent, room size, neighbourhood, furnished status, and listing date. That would replace the WOZ proxy with direct rental-market evidence and allow analysis of rent per square metre and listing volume.
