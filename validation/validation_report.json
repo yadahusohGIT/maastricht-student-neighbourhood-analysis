@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "rows": 38,
+  "checks": {
+    "dataset_not_empty": true,
+    "neighbourhood_codes_unique": true,
+    "core_fields_complete": true,
+    "population_positive": true,
+    "housing_units_positive": true,
+    "percentage_fields_in_range": true,
+    "profile_scores_in_range": true,
+    "balanced_ranks_contiguous": true,
+    "weights_sum_to_one": true,
+    "imputed_values_flagged": true
+  },
+  "warnings": []
+}
