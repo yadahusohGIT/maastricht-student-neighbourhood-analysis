@@ -1,1 +1,83 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maastricht Student Neighbourhood Dashboard</title><script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script><style>body{font-family:Arial,sans-serif;margin:0;background:#f5f6f8;color:#17191c}header,main{max-width:1100px;margin:auto;padding:24px}header{background:white;max-width:none;border-bottom:1px solid #ddd}.panel{background:white;border:1px solid #ddd;border-radius:12px;padding:18px;margin-top:16px}.note{border-left:4px solid #222a3d;padding-left:12px}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #eee;text-align:right}th:nth-child(2),td:nth-child(2){text-align:left}</style></head><body><header><h1>Maastricht Student Neighbourhood Dashboard</h1><p>Balanced-profile results using official CBS 2025 neighbourhood data.</p></header><main><div class="panel"><div id="chart"></div></div><div class="panel"><table><thead><tr><th>Rank</th><th>Neighbourhood</th><th>Score</th></tr></thead><tbody id="rows"></tbody></table></div><div class="panel note"><strong>Important:</strong> average WOZ value is a relative housing-value proxy, not observed student rent. The model does not measure live room availability.</div></main><script>const data=[['Binnenstad',93.8],['Boschstraatkwartier',93.4],['Randwyck',91.9],['Statenkwartier',90.7],['Sint Maartenspoort',84.0],['Kommelkwartier',83.7],['Jekerkwartier',78.2],['Wyck',77.8],['Brusselsepoort',75.7],['Wyckerpoort',71.8]];const rev=[...data].reverse();Plotly.newPlot('chart',[{type:'bar',orientation:'h',y:rev.map(x=>x[0]),x:rev.map(x=>x[1]),text:rev.map(x=>x[1].toFixed(1)),textposition:'outside'}],{title:'Top neighbourhoods — balanced suitability score',xaxis:{range:[0,100],title:'Score'},margin:{l:145,r:45}},{displayModeBar:false,responsive:true});rows.innerHTML=data.map((x,i)=>`<tr><td>${i+1}</td><td>${x[0]}</td><td><b>${x[1].toFixed(1)}</b></td></tr>`).join('');</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maastricht neighbourhoods for students</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--text:#1c1f24;--muted:#68707a;--line:#dde1e6;--accent:#24324a}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:28px max(20px,calc((100vw - 1200px)/2))}
+header h1{margin:0 0 8px;font-size:clamp(26px,4vw,42px)}header p{margin:0;max-width:850px;color:var(--muted);line-height:1.5}
+main{max-width:1200px;margin:auto;padding:20px}.buttons{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+button{border:1px solid var(--line);border-radius:999px;padding:9px 14px;background:var(--panel);font-weight:700;cursor:pointer}
+button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.card{padding:16px}.label{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase}.value{font-size:25px;font-weight:800;margin-top:5px}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.panel{margin-top:14px;padding:14px}
+h2{font-size:18px;margin:4px 4px 0}.sub{font-size:13px;color:var(--muted);margin:5px 4px 0}
+.wrap{max-height:520px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:nth-child(2),td:nth-child(2){text-align:left}th{position:sticky;top:0;background:var(--panel);color:var(--muted)}
+.note{line-height:1.5;border-left:4px solid var(--accent);padding-left:13px}.error{color:#8a1c1c;font-weight:700}
+@media(max-width:850px){.grid,.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>Maastricht neighbourhoods for students</h1>
+<p>A comparison built from CBS 2025 neighbourhood data. Change the profile to see how the ranking moves when affordability, student presence, or housing stock receives more weight.</p>
+</header>
+<main>
+<div class="buttons" id="buttons"></div>
+<section class="cards">
+<div class="card"><div class="label">Top neighbourhood</div><div class="value" id="top-name">—</div></div>
+<div class="card"><div class="label">Top score</div><div class="value" id="top-score">—</div></div>
+<div class="card"><div class="label">Neighbourhoods compared</div><div class="value" id="count">—</div></div>
+</section>
+<section class="grid">
+<div class="panel"><h2>Top neighbourhoods</h2><p class="sub">The ranking updates when the profile changes.</p><div id="bar"></div></div>
+<div class="panel"><h2>Rental housing and WOZ value</h2><p class="sub">Bubble size represents the share of residents aged 15–24.</p><div id="scatter"></div></div>
+</section>
+<section class="panel"><h2>All neighbourhoods</h2><p class="sub">An asterisk marks the imputed supermarket value.</p>
+<div class="wrap"><table><thead><tr><th>Rank</th><th>Neighbourhood</th><th>Score</th><th>15–24 %</th><th>Rental %</th><th>Apartment %</th><th>WOZ €000s</th><th>Supermarket km</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<section class="panel note"><strong>Limitation:</strong> average WOZ value is a rough neighbourhood-level housing-value proxy. It is not the advertised rent for a student room, and this dashboard does not measure current room availability.</section>
+<p class="error" id="error"></p>
+</main>
+<script>
+const profiles={
+balanced:{score:"balanced_score",rank:"balanced_rank"},
+budget_focused:{score:"budget_focused_score",rank:"budget_focused_rank"},
+student_hub:{score:"student_hub_score",rank:"student_hub_rank"},
+housing_availability:{score:"housing_availability_score",rank:"housing_availability_rank"}
+};
+let data=[];
+const label=name=>name.split("_").map(w=>w[0].toUpperCase()+w.slice(1)).join(" ");
+function ranked(profile){
+const p=profiles[profile];
+return [...data].sort((a,b)=>+a[p.rank]-+b[p.rank]).map(r=>({...r,active_score:+r[p.score],active_rank:+r[p.rank]}));
+}
+function render(profile){
+const r=ranked(profile),top=r.slice(0,12).reverse();
+document.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.profile===profile));
+document.getElementById("top-name").textContent=r[0].neighbourhood;
+document.getElementById("top-score").textContent=r[0].active_score.toFixed(1);
+document.getElementById("count").textContent=r.length;
+Plotly.react("bar",[{type:"bar",orientation:"h",x:top.map(x=>x.active_score),y:top.map(x=>x.neighbourhood),text:top.map(x=>x.active_score.toFixed(1)),textposition:"outside",hovertemplate:"<b>%{y}</b><br>Score: %{x:.1f}<extra></extra>"}],{margin:{l:145,r:45,t:15,b:45},xaxis:{title:label(profile)+" score",range:[0,105]},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",showlegend:false},{displayModeBar:false,responsive:true});
+Plotly.react("scatter",[{type:"scatter",mode:"markers",x:r.map(x=>+x.average_woz_eur_thousands),y:r.map(x=>+x.rental_housing_pct),text:r.map(x=>x.neighbourhood),customdata:r.map(x=>[x.active_score,x.student_age_share_pct]),marker:{size:r.map(x=>Math.max(8,Math.min(30,+x.student_age_share_pct))),color:r.map(x=>x.active_score),colorscale:"Blues",opacity:.75,showscale:true,colorbar:{title:"Score"}},hovertemplate:"<b>%{text}</b><br>WOZ: €%{x:.0f}k<br>Rental housing: %{y:.1f}%<br>Profile score: %{customdata[0]:.1f}<br>Residents aged 15–24: %{customdata[1]:.1f}%<extra></extra>"}],{margin:{l:55,r:20,t:15,b:50},xaxis:{title:"Average WOZ value (€000s)"},yaxis:{title:"Rental housing (%)"},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)"},{displayModeBar:false,responsive:true});
+document.getElementById("rows").innerHTML=r.map(x=>`<tr><td>${x.active_rank}</td><td>${x.neighbourhood}</td><td><strong>${x.active_score.toFixed(1)}</strong></td><td>${(+x.student_age_share_pct).toFixed(1)}</td><td>${(+x.rental_housing_pct).toFixed(1)}</td><td>${(+x.apartment_housing_pct).toFixed(1)}</td><td>${(+x.average_woz_eur_thousands).toFixed(0)}</td><td>${(+x.distance_large_supermarket_km).toFixed(1)}${String(x.supermarket_distance_imputed).toLowerCase()==="true"?"*":""}</td></tr>`).join("");
+}
+async function main(){
+try{
+data=await d3.csv("../data/processed/neighbourhood_scores.csv");
+Object.keys(profiles).forEach(p=>{const b=document.createElement("button");b.textContent=label(p);b.dataset.profile=p;b.onclick=()=>render(p);document.getElementById("buttons").appendChild(b)});
+render("balanced");
+}catch(e){document.getElementById("error").textContent="The data file could not be loaded. From the repository root, run: python -m http.server 8000";console.error(e)}
+}
+main();
+</script>
+</body>
+</html>
