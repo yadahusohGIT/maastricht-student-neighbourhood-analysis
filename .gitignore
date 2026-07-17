@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Recreated by the scripts
+data/raw/kwb2025.xlsx
+data/processed/maastricht_neighbourhoods.sqlite
